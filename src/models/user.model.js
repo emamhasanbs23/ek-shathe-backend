@@ -1,7 +1,6 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-// A model = a database table. User maps to the "users" table.
 class User extends Model {}
 
 User.init(
@@ -16,9 +15,13 @@ User.init(
       allowNull: false,
     },
     email: {
-      type: DataTypes.STRING(150),
+      type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,
+    },
+    passwordHash: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,

@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "Ek Shathe API",
+    "description": "Ek-Shathe backend API. Organized by module folders (Auth, Trip, \u2026).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"postman.user@example.com\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman.user@example.com\",\n  \"password\": \"secret123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Saves tokens into the active environment so Refresh/Logout can reuse them.",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.accessToken) {",
+                  "    pm.environment.set('accessToken', body.data.accessToken);",
+                  "  }",
+                  "  if (body.data && body.data.refreshToken) {",
+                  "    const prev = pm.environment.get('refreshToken');",
+                  "    if (prev) pm.environment.set('previousRefreshToken', prev);",
+                  "    pm.environment.set('refreshToken', body.data.refreshToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Saves tokens into the active environment so Refresh/Logout can reuse them.",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.accessToken) {",
+                  "    pm.environment.set('accessToken', body.data.accessToken);",
+                  "  }",
+                  "  if (body.data && body.data.refreshToken) {",
+                  "    const prev = pm.environment.get('refreshToken');",
+                  "    if (prev) pm.environment.set('previousRefreshToken', prev);",
+                  "    pm.environment.set('refreshToken', body.data.refreshToken);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trip",
+      "description": "Trip discovery and management endpoints (add requests as APIs are built)",
+      "item": []
+    }
+  ]
+}

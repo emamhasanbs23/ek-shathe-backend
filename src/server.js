@@ -1,24 +1,26 @@
 require("dotenv").config();
 
 const sequelize = require("./config/database");
+require("./models");
+const { createApp } = require("./app");
 
-// Assign the exported model to a variable so we can call User.create(), etc.
-const User = require("./models/user.model");
-const Trip = require("./models/trip.model");
+const PORT = Number(process.env.PORT) || 5050;
 
 const startServer = async () => {
   try {
-    // Checks that our credentials/host/db name can reach PostgreSQL.
-    // Does not create or change any tables by itself.
     await sequelize.authenticate();
     console.log("Database connection established successfully.");
 
-    // Creates missing tables from our models (learning/prototype only).
-    // Later we'll use migrations instead of sync() for real schema changes.
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     console.log("Database tables synchronized.");
+
+    const app = createApp();
+    app.listen(PORT, () => {
+      console.log(`Server listening on port ${PORT}`);
+    });
   } catch (error) {
-    console.error("Unable to connect to database:", error);
+    console.error("Unable to start server:", error);
+    process.exit(1);
   }
 };
 
