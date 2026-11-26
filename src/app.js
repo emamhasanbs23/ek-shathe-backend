@@ -2,6 +2,7 @@ const express = require("express");
 const errorHandler = require("./common/errorHandler");
 const { setupSwagger } = require("./config/swagger");
 const authRoutes = require("./modules/auth/auth.routes");
+const tripRoutes = require("./modules/trips/trip.routes");
 
 const createApp = () => {
   const app = express();
@@ -13,6 +14,7 @@ const createApp = () => {
 
   setupSwagger(app);
   app.use("/api/v1/auth", authRoutes);
+  app.use("/api/v1/trips", tripRoutes);
 
   app.use(errorHandler);
   return app;

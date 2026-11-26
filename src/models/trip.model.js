@@ -1,8 +1,6 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-// Trip maps to the "trips" table.
-// organizerId is a plain integer for now; we'll add a real foreign key later.
 class Trip extends Model {}
 
 Trip.init(
@@ -12,6 +10,18 @@ Trip.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    title: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    origin: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+    },
     destination: {
       type: DataTypes.STRING(150),
       allowNull: false,
@@ -19,7 +29,7 @@ Trip.init(
     organizerId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: "organizer_id", // JS: organizerId  →  DB column: organizer_id
+      field: "organizer_id",
     },
     startDate: {
       type: DataTypes.DATE,
@@ -31,10 +41,14 @@ Trip.init(
       allowNull: false,
       field: "end_date",
     },
+    capacity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     status: {
       type: DataTypes.STRING(30),
       allowNull: false,
-      defaultValue: "open",
+      defaultValue: "OPEN",
     },
     createdAt: {
       type: DataTypes.DATE,

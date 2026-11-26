@@ -1,11 +1,14 @@
 openapi: 3.0.3
 info:
   title: Ek-Shathe API
-  description: Trip discovery and shared expenses — auth slice
+  description: Trip discovery and shared expenses — auth and trip management
   version: 1.0.0
 servers:
   - url: http://localhost:5050
     description: Local development (macOS AirPlay often occupies 5000)
+tags:
+  - name: Auth
+  - name: Trips
 paths:
   /api/v1/auth/register:
     post:
@@ -124,7 +127,321 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips:
+    post:
+      tags: [Trips]
+      summary: Create a trip
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+            example:
+              destination: "Cox's Bazar"
+              startDate: "2026-12-10"
+              endDate: "2026-12-14"
+              capacity: 4
+              title: Weekend by the sea
+              description: Optional notes
+              origin: Dhaka
+      responses:
+        '201':
+          description: Trip created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSuccessEnvelope'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/mine:
+    get:
+      tags: [Trips]
+      summary: List trips where the caller is an active member
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Member trips
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripListSuccessEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/discover:
+    get:
+      tags: [Trips]
+      summary: List OPEN trips with seats remaining
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Discoverable trips
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripListSuccessEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}:
+    get:
+      tags: [Trips]
+      summary: Get trip detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '200':
+          description: Trip detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSuccessEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}/join-requests:
+    post:
+      tags: [Trips]
+      summary: Submit a join request
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRequestBody'
+      responses:
+        '201':
+          description: Join request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestSuccessEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Conflict (full, not OPEN, already member, duplicate pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    get:
+      tags: [Trips]
+      summary: List join requests (organizer only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, ACCEPTED, REJECTED]
+      responses:
+        '200':
+          description: Join requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestListSuccessEnvelope'
+        '403':
+          description: Not organizer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}/join-requests/{requestId}/accept:
+    post:
+      tags: [Trips]
+      summary: Accept a join request (organizer only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptJoinSuccessEnvelope'
+        '403':
+          description: Not organizer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Trip or request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}/join-requests/{requestId}/reject:
+    post:
+      tags: [Trips]
+      summary: Reject a join request (organizer only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequestSuccessEnvelope'
+        '403':
+          description: Not organizer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '404':
+          description: Trip or request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}/members:
+    get:
+      tags: [Trips]
+      summary: List active trip members
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      responses:
+        '200':
+          description: Members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberListSuccessEnvelope'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/v1/trips/{tripId}/status:
+    patch:
+      tags: [Trips]
+      summary: Update trip status (organizer only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TripId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripSuccessEnvelope'
+        '403':
+          description: Not organizer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '409':
+          description: Invalid transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    TripId:
+      name: tripId
+      in: path
+      required: true
+      schema:
+        type: integer
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     RegisterRequest:
       type: object
@@ -168,9 +485,8 @@ components:
           type: string
     AuthData:
       type: object
+      required: [accessToken, refreshToken]
       properties:
-        user:
-          $ref: '#/components/schemas/PublicUser'
         accessToken:
           type: string
         refreshToken:
@@ -227,3 +543,212 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FieldError'
+    CreateTripRequest:
+      type: object
+      required: [destination, startDate, endDate, capacity]
+      properties:
+        destination:
+          type: string
+          maxLength: 150
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        capacity:
+          type: integer
+          minimum: 2
+        title:
+          type: string
+          maxLength: 150
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        origin:
+          type: string
+          maxLength: 150
+          nullable: true
+    UpdateTripStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [STARTED, CANCELLED]
+    JoinRequestBody:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+          nullable: true
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        origin:
+          type: string
+          nullable: true
+        destination:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        capacity:
+          type: integer
+        organizerId:
+          type: integer
+        status:
+          type: string
+          enum: [OPEN, STARTED, CANCELLED]
+        memberCount:
+          type: integer
+        seatsLeft:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    JoinRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        userId:
+          type: integer
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+        decidedAt:
+          type: string
+          format: date-time
+          nullable: true
+        decidedBy:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TripMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [ORGANIZER, MEMBER]
+        status:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TripSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Trip'
+    TripListSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trip'
+    JoinRequestSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/JoinRequest'
+    JoinRequestListSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinRequest'
+    MemberListSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripMember'
+    AcceptJoinSuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            request:
+              $ref: '#/components/schemas/JoinRequest'
+            member:
+              $ref: '#/components/schemas/TripMember'
+            trip:
+              type: object
+              properties:
+                id:
+                  type: integer
+                memberCount:
+                  type: integer
+                seatsLeft:
+                  type: integer
+                capacity:
+                  type: integer
+                status:
+                  type: string

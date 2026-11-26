@@ -125,8 +125,152 @@
     },
     {
       "name": "Trip",
-      "description": "Trip discovery and management endpoints (add requests as APIs are built)",
-      "item": []
+      "description": "Trip create, discover, join request, accept/reject, members, status",
+      "item": [
+        {
+          "name": "Create Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.id) pm.environment.set('tripId', String(body.data.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destination\": \"Cox's Bazar\",\n  \"startDate\": \"2026-12-10\",\n  \"endDate\": \"2026-12-14\",\n  \"capacity\": 4,\n  \"title\": \"Weekend by the sea\",\n  \"description\": \"Optional notes\",\n  \"origin\": \"Dhaka\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List My Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/mine"
+          }
+        },
+        {
+          "name": "Discover Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/discover"
+          }
+        },
+        {
+          "name": "Get Trip",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}"
+          }
+        },
+        {
+          "name": "Create Join Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.data && body.data.id) pm.environment.set('requestId', String(body.data.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{joinerAccessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/join-requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Happy to join!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Join Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/join-requests?status=PENDING"
+          }
+        },
+        {
+          "name": "Accept Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/join-requests/{{requestId}}/accept"
+          }
+        },
+        {
+          "name": "Reject Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/join-requests/{{requestId}}/reject"
+          }
+        },
+        {
+          "name": "List Members",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/members"
+          }
+        },
+        {
+          "name": "Update Trip Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/trips/{{tripId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"STARTED\"\n}"
+            }
+          }
+        }
+      ]
     }
   ]
 }
